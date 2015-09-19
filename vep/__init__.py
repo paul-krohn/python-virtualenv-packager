@@ -14,6 +14,7 @@ class Application(krux.cli.Application):
 
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
+        pycmd = sh.Command('python')
 
         group.add_argument(
             '--package-prefix',
@@ -23,13 +24,13 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--package-name',
-            default = sh.python('setup.py', '--name').strip(),
+            default = pycmd('setup.py', '--name').strip(),
             help = "The package name, as seen in apt"
         )
 
         group.add_argument(
             '--package-version',
-            default = sh.python('setup.py', '--version').strip(),
+            default = pycmd('setup.py', '--version').strip(),
             help = "The package version."
         )
 
@@ -44,15 +45,25 @@ class Application(krux.cli.Application):
             default = 'requirements.pip',
         )
 
-    def update_paths(self, virtualenv_dir):
+    def update_paths(self):
         vetools = sh.Command('virtualenv-tools')
-        vetools('--update-path', "%s/%s" % (self.args.package_prefix, self.args.package_name), _cwd=virtualenv_dir)
+        new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
+        print "updating paths in %s to %s" % (self.target, new_path)
+        vetools('--update-path', new_path, _cwd=self.target)
+
+    def clean_target(self):
+        find = sh.Command("find")
+        # delete *.pyc and *.pyo files
+        print "removing .pyc and .pyo files in %s" % self.target
+        find(self.target, '-iname', '*.pyo', '-o', '-iname', '*.pyc' '-delete')
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
-        sh.rm('-f', '-r', self.target)
-        sh.virtualenv('--no-site-packages', self.target)
+        rm = sh.Command('rm')
+        rm('-f', '-r', self.target)
+        virtualenv = sh.Command('virtualenv')
+        virtualenv('--no-site-packages', self.target)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
