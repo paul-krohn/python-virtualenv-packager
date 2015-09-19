@@ -50,7 +50,6 @@ class Application(krux.cli.Application):
         )
 
     def update_paths(self):
-        vetools = sh.Command('virtualenv-tools')
         vetools = sh.Command(self.virtualenvtools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
         print "updating paths in %s to %s" % (self.target, new_path)
