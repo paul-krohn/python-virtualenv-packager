@@ -34,9 +34,19 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--build-number',
+            default = False,
+            help = "A build number, ie from your CI, if you want it in the version number."
+        )
+
+        group.add_argument(
             '--pip-requirements',
             default = 'requirements.pip',
         )
+
+    def update_paths(self, virtualenv_dir):
+        vetools = sh.Command('virtualenv-tools')
+        vetools('--update-path', "%s/%s" % (self.args.package_prefix, self.args.package_name), _cwd=virtualenv_dir)
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
@@ -54,6 +64,7 @@ class Application(krux.cli.Application):
             target_pip('install', '-r', self.args.pip_requirements, '-I')
         target_python = sh.Command("%s/bin/python" % self.target)
         target_python('setup.py', 'install')
+        self.update_paths(self.target)
 
 
 def main():
