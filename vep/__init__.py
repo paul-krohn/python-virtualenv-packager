@@ -8,7 +8,7 @@ class Application(krux.cli.Application):
     def __init__(self, name, **kwargs):
         # Call to the superclass to bootstrap.
         super(Application, self).__init__(name=name, **kwargs)
-        self.build_dir = ".build"
+        self.build_dir = os.path.join(self.args.directory, ".build")
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
         self._find_vetools()
@@ -49,6 +49,12 @@ class Application(krux.cli.Application):
             default = 'requirements.pip',
         )
 
+        group.add_argument(
+            '--directory',
+            default = os.getcwd(),
+            help = "Path to look in for the code you want to virtualenv-packageify. default to current directory."
+        )
+
     def update_paths(self):
         vetools = sh.Command(self.virtualenvtools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
@@ -83,10 +89,9 @@ class Application(krux.cli.Application):
             os.symlink(src, dest)
 
     def package(self):
-        # fpm --verbose -s dir -t deb -n "${PACKAGE_NAME}" --prefix "${DEST_DIR}" -v "${VERSION}" -C "${BUILD_DIR}" .
         fpm = sh.Command("fpm")
         fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
-            '-v', self.args.package_version, '-C', self.build_dir, '.')
+            '-v', self.args.package_version, '-C', os.path.join(self.args.directory, self.build_dir), self.args.directory)
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
