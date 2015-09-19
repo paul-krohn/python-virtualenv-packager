@@ -87,6 +87,7 @@ class Application(krux.cli.Application):
             if os.path.exists(dest):
                 os.remove(dest)
             os.symlink(src, dest)
+        os.chdir(self.args.directory)
 
     def package(self):
         fpm = sh.Command("fpm")
