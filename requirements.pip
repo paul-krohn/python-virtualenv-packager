@@ -1,0 +1,3 @@
+--extra-index-url https://staticfiles.krxd.net/foss/pypi/
+krux-stdlib==1.3.0
+sh==1.11
