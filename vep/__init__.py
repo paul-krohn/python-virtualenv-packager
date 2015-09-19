@@ -75,7 +75,9 @@ class Application(krux.cli.Application):
             target_pip('install', '-r', self.args.pip_requirements, '-I')
         target_python = sh.Command("%s/bin/python" % self.target)
         target_python('setup.py', 'install')
-        self.update_paths(self.target)
+        self.update_paths()
+        self.clean_target()
+
 
 
 def main():
