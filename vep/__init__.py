@@ -1,7 +1,7 @@
 import krux.cli
 import sh
 import os
-
+from ConfigParser import RawConfigParser
 
 class Application(krux.cli.Application):
 
@@ -57,6 +57,33 @@ class Application(krux.cli.Application):
         print "removing .pyc and .pyo files in %s" % self.target
         find(self.target, '-iname', '*.pyo', '-o', '-iname', '*.pyc' '-delete')
 
+    def symlink_entry_points(self):
+        # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defauslt to /usr/local/bin by def
+        mkdir = sh.Command('mkdir')
+        mkdir('-p', "%s/bin" % self.build_dir)
+        rcp = RawConfigParser()
+        egg = "%s.egg-info" % self.args.package_name
+        entry_points = os.path.join(egg, 'entry_points.txt')
+        if not os.path.exists(egg) or not os.path.exists(entry_points):
+            return
+        rcp.read(entry_points)
+        if 'console_scripts' not in rcp.sections():
+            return
+        os.chdir("%s/bin" % self.build_dir)
+        for item in rcp.items('console_scripts'):
+            src = "../%s/bin/%s" % (self.package_dir, item[0])
+            dest = item[0]
+            print 'symlinking ' + src + ' to ' + dest
+            if os.path.exists(dest):
+                os.remove(dest)
+            os.symlink(src, dest)
+
+    def package(self):
+        # fpm --verbose -s dir -t deb -n "${PACKAGE_NAME}" --prefix "${DEST_DIR}" -v "${VERSION}" -C "${BUILD_DIR}" .
+        fpm = sh.Command("fpm")
+        fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
+            '-v', self.args.package_version, '-C', self.build_dir, '.')
+
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
@@ -77,7 +104,8 @@ class Application(krux.cli.Application):
         target_python('setup.py', 'install')
         self.update_paths()
         self.clean_target()
-
+        self.symlink_entry_points()
+        self.package()
 
 
 def main():
