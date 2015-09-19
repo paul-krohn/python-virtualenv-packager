@@ -2,6 +2,8 @@ import krux.cli
 import sh
 import os
 from ConfigParser import RawConfigParser
+import re
+import sys
 
 class Application(krux.cli.Application):
 
@@ -68,13 +70,16 @@ class Application(krux.cli.Application):
         find(self.target, '-iname', '*.pyo', '-o', '-iname', '*.pyc' '-delete')
 
     def symlink_entry_points(self):
+        print "symlinking entry points"
         # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defauslt to /usr/local/bin by def
         mkdir = sh.Command('mkdir')
         mkdir('-p', "%s/bin" % self.build_dir)
         rcp = RawConfigParser()
-        egg = "%s.egg-info" % self.args.package_name
+        # someone could be foolish enough to use a hypen in ther package name, needs to be a _.
+        egg = "%s.egg-info" % re.sub('-', '_', self.args.package_name)
         entry_points = os.path.join(egg, 'entry_points.txt')
         if not os.path.exists(egg) or not os.path.exists(entry_points):
+            print "no entry points, so no symlinks to create"
             return
         rcp.read(entry_points)
         if 'console_scripts' not in rcp.sections():
@@ -98,7 +103,9 @@ class Application(krux.cli.Application):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
         rm = sh.Command('rm')
+        print "deleting previous virtual environment"
         rm('-f', '-r', self.target)
+        print "creating new virtual environment"
         virtualenv = sh.Command('virtualenv')
         virtualenv('--no-site-packages', self.target)
         # the sh module does not provide a way to create a shell with a virtualenv
@@ -106,9 +113,11 @@ class Application(krux.cli.Application):
         # in the target virtualenv
         target_pip = sh.Command("%s/bin/pip" % self.target)
         # now install pip 1.4.1 ugh
+        print "installing pip 1.4.1"
         target_pip('install', 'pip==1.4.1')
         # if there is a requirements.pip, go ahead and install all the things
         if os.path.isfile(self.args.pip_requirements):
+            print "installing requirements"
             target_pip('install', '-r', self.args.pip_requirements, '-I')
         target_python = sh.Command("%s/bin/python" % self.target)
         target_python('setup.py', 'install')
