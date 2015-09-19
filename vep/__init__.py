@@ -11,6 +11,10 @@ class Application(krux.cli.Application):
         self.build_dir = ".build"
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
+        self._find_vetools()
+
+    def _find_vetools(self):
+        self.virtualenvtools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
 
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
@@ -47,6 +51,7 @@ class Application(krux.cli.Application):
 
     def update_paths(self):
         vetools = sh.Command('virtualenv-tools')
+        vetools = sh.Command(self.virtualenvtools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
         print "updating paths in %s to %s" % (self.target, new_path)
         vetools('--update-path', new_path, _cwd=self.target)
