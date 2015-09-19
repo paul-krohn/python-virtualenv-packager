@@ -125,7 +125,7 @@ class Application(krux.cli.Application):
         self.update_paths()
         self.clean_target()
         self.symlink_entry_points()
-        # self.package()
+        self.package()
 
 
 def main():
