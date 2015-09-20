@@ -31,7 +31,7 @@ DOWNLOAD_URL = ''.join((REPO_URL, '/tarball/release/', VERSION))
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 REQUIREMENTS = os.path.join(BASE_DIR, 'requirements.pip')
 # start with pip, to suppress a pep8 warning from the import above
-DEPENDENCIES = ['pip==1.4.1']
+DEPENDENCIES = ['pip', 'sh']
 # then loop over the requirements from the file
 for package in parse_requirements(REQUIREMENTS):
     DEPENDENCIES.append(str(package.req))
