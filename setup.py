@@ -43,9 +43,9 @@ setup(
     author_email     = 'pkrohn@krux.com',
     maintainer       = 'Paul Krohn',
     maintainer_email = 'pkrohn@krux.com',
-    description      = 'Create a package from a virtualenv.',
+    description      = 'Create an apt package from a python projet repo.',
     long_description = """
-    Wraps fpm, mostly.
+    Creates a virtualenv, installs dependencies, fixes paths, calls fpm to create a .deb package.
     """,
     url              = REPO_URL,
     download_url     = DOWNLOAD_URL,

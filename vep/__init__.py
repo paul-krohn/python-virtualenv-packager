@@ -5,6 +5,7 @@ from ConfigParser import RawConfigParser
 import re
 import sys
 
+
 class Application(krux.cli.Application):
 
     def __init__(self, name, **kwargs):
@@ -71,7 +72,7 @@ class Application(krux.cli.Application):
 
     def symlink_entry_points(self):
         print "symlinking entry points"
-        # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defauslt to /usr/local/bin by def
+        # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defaults to /usr/local/bin
         mkdir = sh.Command('mkdir')
         mkdir('-p', "%s/bin" % self.build_dir)
         rcp = RawConfigParser()
