@@ -95,9 +95,10 @@ class Application(krux.cli.Application):
         os.chdir(self.args.directory)
 
     def package(self):
+        os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
         print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
-                  '-v', self.args.package_version, '-C', os.path.join(self.args.directory, self.build_dir), self.args.directory)
+                  '-v', self.args.package_version, '-C', os.path.join(self.args.directory, self.build_dir), '.')
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
