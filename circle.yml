@@ -1,4 +1,6 @@
 dependencies:
-  pre: sudo gem install fpm
+  pre:
+    - sudo gem install fpm
 test:
-  post ve-packager
+  post:
+    - ve-packager
