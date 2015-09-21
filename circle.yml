@@ -3,4 +3,4 @@ dependencies:
     - sudo gem install fpm
 test:
   post:
-    - ve-packager
+    - ve-packager --pip-version 1.4.1
