@@ -1,0 +1,2 @@
+dependencies:
+  pre: sudo gem install fpm
