@@ -53,6 +53,12 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--pip-version',
+            default = 'latest',
+            help = 'Version of pip to install in the virtualenv where your application is built.',
+        )
+
+        group.add_argument(
             '--directory',
             default = os.getcwd(),
             help = "Path to look in for the code you want to virtualenv-packageify. default to current directory."
@@ -101,6 +107,16 @@ class Application(krux.cli.Application):
         print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
                   '-v', self.args.package_version, '-C', os.path.join(self.args.directory, self.build_dir), '.')
 
+    def install_pip(self, pip):
+        """
+        :param pip: a sh Command pointing to your ve's pip
+        :return:
+        """
+        if self.args.pip_version == 'latest':
+            pip('install', 'pip', '--upgrade')
+        else:
+            pip('install', "pip==%s", self.args.pip_version)
+
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
@@ -113,10 +129,10 @@ class Application(krux.cli.Application):
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
+        # now install the pip version from args.pip_version
         target_pip = sh.Command("%s/bin/pip" % self.target)
-        # now install pip 1.4.1 ugh
-        print "installing pip 1.4.1"
-        print target_pip('install', 'pip==1.4.1')
+        print "installing pip==%s" % self.args.pip_version
+        self.install_pip(target_pip)
         # if there is a requirements.pip, go ahead and install all the things
         if os.path.isfile(self.args.pip_requirements):
             print "installing requirements"
