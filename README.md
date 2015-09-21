@@ -9,3 +9,7 @@ Ideally, cd to the root of your checked-out repo, and run it:
 
     $ cd my-python-project
     $ ve-packager
+
+## Limitations
+
+The underlying program, fpm, doesn't work on OS X, due to waht looks like an issue with a call to utime().
