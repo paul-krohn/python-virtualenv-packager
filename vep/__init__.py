@@ -115,7 +115,7 @@ class Application(krux.cli.Application):
         if self.args.pip_version == 'latest':
             pip('install', 'pip', '--upgrade')
         else:
-            pip('install', "pip==%s", self.args.pip_version)
+            pip('install', "pip==%s" % self.args.pip_version)
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
