@@ -1,4 +1,7 @@
+dependencies:
+  pre:
+    - sudo gem install fpm
 test:
   post:
-    - sudo gem install fpm
+    -
     - ve-packager --pip-version 1.4.1
