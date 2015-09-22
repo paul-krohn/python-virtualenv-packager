@@ -12,4 +12,4 @@ Ideally, cd to the root of your checked-out repo, and run it:
 
 ## Limitations
 
-The underlying program, fpm, doesn't work on OS X, due to waht looks like an issue with a call to utime().
+The underlying program, fpm, doesn't work on OS X, due to what looks like an issue with a call to utime().
