@@ -1,6 +1,10 @@
 dependencies:
   pre:
     - sudo gem install fpm
+general:
+  branches:
+    only:
+      - circle-ci
 test:
   post:
     -
