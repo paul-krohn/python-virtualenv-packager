@@ -30,6 +30,12 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--repo-url',
+            default = pycmd('setup.py', '--url').strip(),
+            help = "Repo URL to pass through to fpm"
+        )
+
+        group.add_argument(
             '--package-name',
             default = pycmd('setup.py', '--name').strip(),
             help = "The package name, as seen in apt"
@@ -105,7 +111,7 @@ class Application(krux.cli.Application):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
         print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
-                  '-v', self.args.package_version, '-C', os.path.join(self.args.directory, self.build_dir), '.')
+                  '-v', self.args.package_version, '--url', self.args.repo_url, '-C', os.path.join(self.args.directory, self.build_dir), '.')
 
     def install_pip(self, pip):
         """

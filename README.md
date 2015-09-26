@@ -15,3 +15,5 @@ Ideally, cd to the root of your checked-out repo, and run it:
 The underlying program, fpm, doesn't work on OS X, due to what looks like an issue with a call to utime().
 
 As they include the python binary, the packages created only work on the platform on which they were created.
+
+On ubuntu lucid nodes, you'll need to activate a virtualenv that has a working pip module installed; the version of pip provided in the 'python-pip' package does not work.
