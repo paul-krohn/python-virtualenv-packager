@@ -166,19 +166,17 @@ class Application(krux.cli.Application):
         if not self.args.skip_scripts:
             self.symlink_entry_points()
         if self.args.shim_script is not None:
+            # copy the existing environment variables
+            env_vars = os.environ.copy()
             # set some environment variables the script might need
-            env_vars = {
-                "PACKAGE_PREFIX": self.args.package_prefix,
-                "PACKAGE_NAME": self.args.package_name,
-                "PACKAGE_DIR": self.package_dir,
-                "TARGET": self.target,
-                "BUILD_DIR": self.build_dir,
-            }
-            #sh.google_chrome(_env={"SOCKS_SERVER": "localhost:1234"})
-
+            env_vars['PACKAGE_PREFIX'] = self.args.package_prefix
+            env_vars['PACKAGE_NAME'] = self.args.package_name
+            env_vars['PACKAGE_DIR'] = self.package_dir
+            env_vars['TARGET'] = self.target
+            env_vars['BUILD_DIR'] = self.build_dir
             print "running shim script: %s" % self.args.shim_script
-            shim = sh.Command("%s" % self.args.shim_script, _env=env_vars)
-            print shim()
+            shim = sh.Command("%s" % self.args.shim_script)
+            print shim(_env=env_vars)
         self.package()
 
 
