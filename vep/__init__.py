@@ -5,6 +5,10 @@ from ConfigParser import RawConfigParser
 import re
 import sys
 
+# pass-through function to enable linewise output from commands called via sh
+def print_linewise(line):
+    print(line)
+
 
 class Application(krux.cli.Application):
 
@@ -156,8 +160,7 @@ class Application(krux.cli.Application):
         if os.path.isfile(self.args.pip_requirements):
             print "installing requirements"
             # installing requirements can take a spell, print output linewise
-            for output_line in target_pip('install', '-r', self.args.pip_requirements, '-I'):
-                print output_line
+            target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_linewise)
         target_python = sh.Command("%s/bin/python" % self.target)
         print "running setup.py"
         print target_python('setup.py', 'install')
@@ -176,7 +179,7 @@ class Application(krux.cli.Application):
             env_vars['BUILD_DIR'] = self.build_dir
             print "running shim script: %s" % self.args.shim_script
             shim = sh.Command("%s" % self.args.shim_script)
-            print shim(_env=env_vars)
+            print shim(_env=env_vars, _out=print_linewise)
         self.package()
 
 
