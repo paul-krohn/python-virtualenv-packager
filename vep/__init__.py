@@ -50,7 +50,14 @@ class Application(krux.cli.Application):
         group.add_argument(
             '--skip-scripts',
             default = False,
+            action = 'store_true',
             help = "Set this to skip installing all the scripts in all the setup.py files in all the requirements"
+        )
+
+        group.add_argument(
+            '--shim-script',
+            default = None,
+            help = "An extra script to run between the build and package steps. If you need to do unnatural things to make your package work, this is the place to do them. Called scripts need to have a shebang line."
         )
 
         group.add_argument(
@@ -148,7 +155,9 @@ class Application(krux.cli.Application):
         # if there is a requirements.pip, go ahead and install all the things
         if os.path.isfile(self.args.pip_requirements):
             print "installing requirements"
-            print target_pip('install', '-r', self.args.pip_requirements, '-I')
+            # installing requirements can take a spell, print output linewise
+            for output_line in target_pip('install', '-r', self.args.pip_requirements, '-I'):
+                print output_line
         target_python = sh.Command("%s/bin/python" % self.target)
         print "running setup.py"
         print target_python('setup.py', 'install')
@@ -156,6 +165,20 @@ class Application(krux.cli.Application):
         self.clean_target()
         if not self.args.skip_scripts:
             self.symlink_entry_points()
+        if self.args.shim_script is not None:
+            # set some environment variables the script might need
+            env_vars = {
+                "PACKAGE_PREFIX": self.args.package_prefix,
+                "PACKAGE_NAME": self.args.package_name,
+                "PACKAGE_DIR": self.package_dir,
+                "TARGET": self.target,
+                "BUILD_DIR": self.build_dir,
+            }
+            #sh.google_chrome(_env={"SOCKS_SERVER": "localhost:1234"})
+
+            print "running shim script: %s" % self.args.shim_script
+            shim = sh.Command("%s" % self.args.shim_script, _env=env_vars)
+            print shim()
         self.package()
 
 
