@@ -48,6 +48,12 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--skip-scripts',
+            default = False,
+            help = "Set this to skip installing all the scripts in all the setup.py files in all the requirements"
+        )
+
+        group.add_argument(
             '--build-number',
             default = False,
             help = "A build number, ie from your CI, if you want it in the version number."
@@ -148,7 +154,8 @@ class Application(krux.cli.Application):
         print target_python('setup.py', 'install')
         self.update_paths()
         self.clean_target()
-        self.symlink_entry_points()
+        if not self.args.skip_scripts:
+            self.symlink_entry_points()
         self.package()
 
 
