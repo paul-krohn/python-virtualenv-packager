@@ -174,8 +174,6 @@ class Application(krux.cli.Application):
                 "TARGET": self.target,
                 "BUILD_DIR": self.build_dir,
             }
-            #sh.google_chrome(_env={"SOCKS_SERVER": "localhost:1234"})
-
             print "running shim script: %s" % self.args.shim_script
             shim = sh.Command("%s" % self.args.shim_script, _env=env_vars)
             print shim()
