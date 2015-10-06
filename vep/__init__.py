@@ -9,9 +9,11 @@ import re
 import sys
 
 
-# pass-through function to enable line-wise output from commands called via sh
+# pass-through function to enable line-wise output from commands called via sh.
+# you would think you could just pass "print" as the callback function, but that
+# does not produce meaningful output. So we have this wrapper.
 def print_line(line):
-    print(line)
+    print(line.rstrip())
 
 
 class Application(krux.cli.Application):
