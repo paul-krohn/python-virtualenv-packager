@@ -143,9 +143,9 @@ class Application(krux.cli.Application):
         # --url over-rides fpm's default of "example.com"
         # -C changes to the provided directory for the root of the package
         # . is the directory to start out in, before the -C directory and is where the package file is created
-        print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
-                  self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
-                  '-C', os.path.join(self.args.directory, self.build_dir), '.')
+        fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
+            self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
+            '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
 
     def install_pip(self, pip):
         """
