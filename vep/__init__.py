@@ -1,3 +1,6 @@
+# call print() as a function, not statement
+from __future__ import print_function
+
 import krux.cli
 import sh
 import os
@@ -93,17 +96,17 @@ class Application(krux.cli.Application):
     def update_paths(self):
         vetools = sh.Command(self.vetools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
-        print "updating paths in %s to %s" % (self.target, new_path)
+        print("updating paths in %s to %s" % (self.target, new_path))
         vetools('--update-path', new_path, _cwd=self.target)
 
     def clean_target(self):
         find = sh.Command("find")
         # delete *.pyc and *.pyo files
-        print "removing .pyc and .pyo files in %s" % self.target
+        print("removing .pyc and .pyo files in %s" % self.target)
         find(self.target, '-iname', '*.pyo', '-o', '-iname', '*.pyc' '-delete')
 
     def symlink_entry_points(self):
-        print "sym-linking entry points"
+        print("sym-linking entry points")
         # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defaults to /usr/local/bin
         mkdir = sh.Command('mkdir')
         mkdir('-p', "%s/bin" % self.build_dir)
@@ -112,7 +115,7 @@ class Application(krux.cli.Application):
         egg = "%s.egg-info" % re.sub('-', '_', self.args.package_name)
         entry_points = os.path.join(egg, 'entry_points.txt')
         if not os.path.exists(egg) or not os.path.exists(entry_points):
-            print "no entry points, so no symlinks to create"
+            print("no entry points, so no symlinks to create")
             return
         rcp.read(entry_points)
         if 'console_scripts' not in rcp.sections():
@@ -121,7 +124,7 @@ class Application(krux.cli.Application):
         for item in rcp.items('console_scripts'):
             src = "../%s/bin/%s" % (self.package_dir, item[0])
             dest = item[0]
-            print 'sym-linking ' + src + ' to ' + dest
+            print('sym-linking ' + src + ' to ' + dest)
             if os.path.exists(dest):
                 os.remove(dest)
             os.symlink(src, dest)
@@ -148,34 +151,34 @@ class Application(krux.cli.Application):
         :return:
         """
         if self.args.pip_version == 'latest':
-            pip('install', 'pip', '--upgrade')
+            pip('install', 'pip', '--upgrade', _out=print_line)
         else:
-            pip('install', "pip==%s" % self.args.pip_version)
+            pip('install', "pip==%s" % self.args.pip_version, _out=print_line)
 
     def run(self):
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
         rm = sh.Command('rm')
-        print "deleting previous virtual environment"
+        print("deleting previous virtual environment")
         rm('-f', '-r', self.target)
-        print "creating new virtual environment"
+        print("creating new virtual environment")
         virtualenv = sh.Command('virtualenv')
-        print virtualenv('--no-site-packages', self.target)
+        print(virtualenv('--no-site-packages', self.target, _out=print_line))
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
         # now install the pip version from args.pip_version
         target_pip = sh.Command("%s/bin/pip" % self.target)
-        print "installing pip==%s" % self.args.pip_version
+        print("installing pip==%s" % self.args.pip_version)
         self.install_pip(target_pip)
         # if there is a requirements.pip, go ahead and install all the things
         if os.path.isfile(self.args.pip_requirements):
-            print "installing requirements"
+            print("installing requirements")
             # installing requirements can take a spell, print output line-wise
             target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_line)
         target_python = sh.Command("%s/bin/python" % self.target)
-        print "running setup.py"
-        print target_python('setup.py', 'install')
+        print("running setup.py for %s" % self.args.package_name)
+        print(target_python('setup.py', 'install'))
         self.update_paths()
         self.clean_target()
         if not self.args.skip_scripts:
@@ -189,9 +192,9 @@ class Application(krux.cli.Application):
             env_vars['PACKAGE_DIR'] = self.package_dir
             env_vars['TARGET'] = self.target
             env_vars['BUILD_DIR'] = self.build_dir
-            print "running shim script: %s" % self.args.shim_script
+            print("running shim script: %s" % self.args.shim_script)
             shim = sh.Command("%s" % self.args.shim_script)
-            print shim(_env=env_vars, _out=print_line)
+            shim(_env=env_vars, _out=print_line)
         self.package()
 
 
