@@ -56,7 +56,7 @@ class Application(krux.cli.Application):
             '--skip-scripts',
             default=False,
             action='store_true',
-            help="Set this to skip installing all the scripts in all the setup.py files in all the requirements"
+            help="Skip installing all the scripts in all the setup.py files in all the requirements"
         )
 
         group.add_argument(
@@ -64,7 +64,7 @@ class Application(krux.cli.Application):
             default=None,
             help="An extra script to run between the build and package steps. "
                  "If you need to do unnatural things to make your package work, this is the place to do them. "
-                 "Called scripts need to have a shebang line."
+                 "The script will be called via the sh module and therefore needs a shebang line."
         )
 
         group.add_argument(
@@ -130,6 +130,14 @@ class Application(krux.cli.Application):
     def package(self):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
+        # -s dir means "make the package from a directory"
+        # -t deb means "make a Debian package"
+        # -n sets the name of the package
+        # --prefix sets the file root under which all included files will be installed
+        # -v sets the package version
+        # --url over-rides fpm's default of "example.com"
+        # -C changes to the provided directory for the root of the package
+        # . is the directory to start out in, before the -C directory and is where the package file is created
         print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
                   self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
                   '-C', os.path.join(self.args.directory, self.build_dir), '.')
