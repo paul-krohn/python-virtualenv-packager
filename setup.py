@@ -14,7 +14,7 @@ from pip.req import parse_requirements
 import os
 
 # We use the version to construct the DOWNLOAD_URL.
-VERSION      = '0.0.4'
+VERSION      = '0.0.5'
 NAME         = 've-packager'
 
 # URL to the repository on Github.
