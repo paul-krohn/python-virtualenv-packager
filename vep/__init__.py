@@ -165,7 +165,7 @@ class Application(krux.cli.Application):
         rm('-f', '-r', self.target)
         print("creating new virtual environment")
         virtualenv = sh.Command('virtualenv')
-        print(virtualenv('--no-site-packages', self.target, _out=print_line))
+        virtualenv('--no-site-packages', self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
@@ -180,7 +180,7 @@ class Application(krux.cli.Application):
             target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_line)
         target_python = sh.Command("%s/bin/python" % self.target)
         print("running setup.py for %s" % self.args.package_name)
-        print(target_python('setup.py', 'install'))
+        target_python('setup.py', 'install', _out=print_line)
         self.update_paths()
         self.clean_target()
         if not self.args.skip_scripts:
