@@ -5,8 +5,9 @@ from ConfigParser import RawConfigParser
 import re
 import sys
 
-# pass-through function to enable linewise output from commands called via sh
-def print_linewise(line):
+
+# pass-through function to enable line-wise output from commands called via sh
+def print_line(line):
     print(line)
 
 
@@ -21,7 +22,7 @@ class Application(krux.cli.Application):
         self._find_vetools()
 
     def _find_vetools(self):
-        self.virtualenvtools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
+        self.vetools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
 
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
@@ -29,66 +30,68 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--package-prefix',
-            default = '/usr/local',
-            help = "Path to prefix the entire package with"
+            default='/usr/local',
+            help="Path to prefix the entire package with"
         )
 
         group.add_argument(
             '--repo-url',
-            default = pycmd('setup.py', '--url').strip(),
-            help = "Repo URL to pass through to fpm"
+            default=pycmd('setup.py', '--url').strip(),
+            help="Repo URL to pass through to fpm"
         )
 
         group.add_argument(
             '--package-name',
-            default = pycmd('setup.py', '--name').strip(),
-            help = "The package name, as seen in apt"
+            default=pycmd('setup.py', '--name').strip(),
+            help="The package name, as seen in apt"
         )
 
         group.add_argument(
             '--package-version',
-            default = pycmd('setup.py', '--version').strip(),
-            help = "The package version."
+            default=pycmd('setup.py', '--version').strip(),
+            help="The package version."
         )
 
         group.add_argument(
             '--skip-scripts',
-            default = False,
-            action = 'store_true',
-            help = "Set this to skip installing all the scripts in all the setup.py files in all the requirements"
+            default=False,
+            action='store_true',
+            help="Set this to skip installing all the scripts in all the setup.py files in all the requirements"
         )
 
         group.add_argument(
             '--shim-script',
-            default = None,
-            help = "An extra script to run between the build and package steps. If you need to do unnatural things to make your package work, this is the place to do them. Called scripts need to have a shebang line."
+            default=None,
+            help="An extra script to run between the build and package steps. "
+                 "If you need to do unnatural things to make your package work, this is the place to do them. "
+                 "Called scripts need to have a shebang line."
         )
 
         group.add_argument(
             '--build-number',
-            default = False,
-            help = "A build number, ie from your CI, if you want it in the version number."
+            default=False,
+            help="A build number, ie from your CI, if you want it in the version number."
         )
 
         group.add_argument(
             '--pip-requirements',
-            default = 'requirements.pip',
+            default='requirements.pip',
         )
 
         group.add_argument(
             '--pip-version',
-            default = 'latest',
-            help = 'Version of pip to install in the virtualenv where your application is built.',
+            default='latest',
+            help='Version of pip to install in the virtualenv where your application is built.',
         )
 
         group.add_argument(
             '--directory',
-            default = os.getcwd(),
-            help = "Path to look in for the code you want to virtualenv-packageify. default to current directory."
+            default=os.getcwd(),
+            help="Path to look in for the code you want to virtualenv-packageify. default to current directory."
         )
 
     def update_paths(self):
-        vetools = sh.Command(self.virtualenvtools)
+        vetools = sh.Command(self.vetools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
         print "updating paths in %s to %s" % (self.target, new_path)
         vetools('--update-path', new_path, _cwd=self.target)
@@ -100,7 +103,7 @@ class Application(krux.cli.Application):
         find(self.target, '-iname', '*.pyo', '-o', '-iname', '*.pyc' '-delete')
 
     def symlink_entry_points(self):
-        print "symlinking entry points"
+        print "sym-linking entry points"
         # make a directory at .build/bin, which will show up in self.package_prefix/bin, ie defaults to /usr/local/bin
         mkdir = sh.Command('mkdir')
         mkdir('-p', "%s/bin" % self.build_dir)
@@ -118,7 +121,7 @@ class Application(krux.cli.Application):
         for item in rcp.items('console_scripts'):
             src = "../%s/bin/%s" % (self.package_dir, item[0])
             dest = item[0]
-            print 'symlinking ' + src + ' to ' + dest
+            print 'sym-linking ' + src + ' to ' + dest
             if os.path.exists(dest):
                 os.remove(dest)
             os.symlink(src, dest)
@@ -127,8 +130,9 @@ class Application(krux.cli.Application):
     def package(self):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
-        print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix', self.args.package_prefix,
-                  '-v', self.args.package_version, '--url', self.args.repo_url, '-C', os.path.join(self.args.directory, self.build_dir), '.')
+        print fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
+                  self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
+                  '-C', os.path.join(self.args.directory, self.build_dir), '.')
 
     def install_pip(self, pip):
         """
@@ -159,8 +163,8 @@ class Application(krux.cli.Application):
         # if there is a requirements.pip, go ahead and install all the things
         if os.path.isfile(self.args.pip_requirements):
             print "installing requirements"
-            # installing requirements can take a spell, print output linewise
-            target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_linewise)
+            # installing requirements can take a spell, print output line-wise
+            target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_line)
         target_python = sh.Command("%s/bin/python" % self.target)
         print "running setup.py"
         print target_python('setup.py', 'install')
@@ -179,7 +183,7 @@ class Application(krux.cli.Application):
             env_vars['BUILD_DIR'] = self.build_dir
             print "running shim script: %s" % self.args.shim_script
             shim = sh.Command("%s" % self.args.shim_script)
-            print shim(_env=env_vars, _out=print_linewise)
+            print shim(_env=env_vars, _out=print_line)
         self.package()
 
 
