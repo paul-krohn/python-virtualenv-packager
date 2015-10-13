@@ -80,7 +80,7 @@ class Application(krux.cli.Application):
         group.add_argument(
             '--build-number',
             default=False,
-            help="A build number, ie from your CI, if you want it in the version number."
+            help="A build number, ie from your CI, if you want it to be appended the version number."
         )
 
         group.add_argument(
@@ -140,6 +140,10 @@ class Application(krux.cli.Application):
     def package(self):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
+        # if present, append the build number to the version number
+        version_string = self.args.package_version
+        if self.args.build_number is not None:
+            version_string = "{0}-{1}".format(self.args.package_version, self.args.build_number)
         # -s dir means "make the package from a directory"
         # -t deb means "make a Debian package"
         # -n sets the name of the package
@@ -149,7 +153,7 @@ class Application(krux.cli.Application):
         # -C changes to the provided directory for the root of the package
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
-            self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
+            self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
             '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
 
     def install_pip(self, pip):
