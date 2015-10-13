@@ -14,7 +14,7 @@ from pip.req import parse_requirements
 import os
 
 # We use the version to construct the DOWNLOAD_URL.
-VERSION      = '0.0.5'
+VERSION      = '0.0.6'
 NAME         = 've-packager'
 
 # URL to the repository on Github.
@@ -24,17 +24,7 @@ REPO_URL     = 'https://github.com/krux/python-virtualenv-packager'
 DOWNLOAD_URL = ''.join((REPO_URL, '/tarball/release/', VERSION))
 
 # Requirements
-# We want to install all the dependencies of the library as well, but we
-# don't want to duplicate the dependencies both here and in
-# requirements.pip. Instead we parse requirements.pip to pull in our
-# dependencies.
-BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-REQUIREMENTS = os.path.join(BASE_DIR, 'requirements.pip')
-# start with pip, to suppress a pep8 warning from the import above
-DEPENDENCIES = ['pip', 'sh']
-# then loop over the requirements from the file
-for package in parse_requirements(REQUIREMENTS):
-    DEPENDENCIES.append(str(package.req))
+# If you have the option, run "pip install -r requirements.pip"
 
 setup(
     name             = NAME,
@@ -51,7 +41,11 @@ setup(
     download_url     = DOWNLOAD_URL,
     license          = 'All Rights Reserved.',
     packages         = find_packages(),
-    install_requires = DEPENDENCIES,
+    install_requires = [
+        "krux-stdlib",
+        "sh",
+        "virtualenv-tools"
+    ],
     entry_points     = {
         'console_scripts': [
             've-packager = vep:main',
