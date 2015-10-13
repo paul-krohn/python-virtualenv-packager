@@ -15,6 +15,8 @@ import sys
 def print_line(line):
     print(line.rstrip())
 
+class VEPackagerError(StandardError):
+    pass
 
 class Application(krux.cli.Application):
 
@@ -143,7 +145,7 @@ class Application(krux.cli.Application):
         # if present, append the build number to the version number
         version_string = self.args.package_version
         if self.args.build_number is not None:
-            version_string = "{0}-{1}".format(self.args.package_version, self.args.build_number)
+            version_string = "{0}~{1}".format(self.args.package_version, self.args.build_number)
         # -s dir means "make the package from a directory"
         # -t deb means "make a Debian package"
         # -n sets the name of the package
@@ -169,9 +171,9 @@ class Application(krux.cli.Application):
     def run(self):
         os.chdir(self.args.directory)
         if not os.path.isfile("setup.py"):
-            raise Exception("no setup.py in %s; can't proceed; try --help" % self.args.directory)
+            raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
         if self.args.package_version is None or self.args.package_name is None:
-            raise Exception("no package name or version provided or in setup.py, can't proceed.")
+            raise VEPackagerError("no package name or version provided or in setup.py, can't proceed.")
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
         rm = sh.Command('rm')
