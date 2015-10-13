@@ -29,9 +29,14 @@ class Application(krux.cli.Application):
     def _find_vetools(self):
         self.vetools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
 
+    @staticmethod
+    def _get_setup_attribute(attribute_name):
+        pycmd = sh.Command('python')
+        if os.path.isfile("setup.py"):
+            return pycmd('setup.py', "--%s" % attribute_name).strip()
+
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
-        pycmd = sh.Command('python')
 
         group.add_argument(
             '--package-prefix',
@@ -41,19 +46,19 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--repo-url',
-            default=pycmd('setup.py', '--url').strip(),
+            default=self._get_setup_attribute('url'),
             help="Repo URL to pass through to fpm"
         )
 
         group.add_argument(
             '--package-name',
-            default=pycmd('setup.py', '--name').strip(),
+            default=self._get_setup_attribute('name'),
             help="The package name, as seen in apt"
         )
 
         group.add_argument(
             '--package-version',
-            default=pycmd('setup.py', '--version').strip(),
+            default=self._get_setup_attribute('version'),
             help="The package version."
         )
 
@@ -158,6 +163,11 @@ class Application(krux.cli.Application):
             pip('install', "pip==%s" % self.args.pip_version, _out=print_line)
 
     def run(self):
+        os.chdir(self.args.directory)
+        if not os.path.isfile("setup.py"):
+            raise Exception("no setup.py in %s; can't proceed; try --help" % self.args.directory)
+        if self.args.package_version is None or self.args.package_name is None:
+            raise Exception("no package name or version provided or in setup.py, can't proceed.")
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
         rm = sh.Command('rm')
