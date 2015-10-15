@@ -144,7 +144,7 @@ class Application(krux.cli.Application):
         fpm = sh.Command("fpm")
         # if present, append the build number to the version number
         version_string = self.args.package_version
-        if self.args.build_number is not None:
+        if self.args.build_number:
             version_string = "{0}~{1}".format(self.args.package_version, self.args.build_number)
         # -s dir means "make the package from a directory"
         # -t deb means "make a Debian package"
