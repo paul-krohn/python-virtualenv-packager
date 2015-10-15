@@ -3,6 +3,10 @@ A wrapper for fpm to create packages from Python virtual environments.
 
 Based on a shell script by @plathrop. The use case is pretty environment-specific, but I've tried to keep it agnostic.
 
+## Installation
+This is a debian package in krux's apt repo. To install you should be able to:
+    $ apt-get install ve-packager
+
 ## Usage
 
 Ideally, cd to the root of your checked-out repo, and run it:
