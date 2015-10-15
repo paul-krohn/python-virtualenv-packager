@@ -15,6 +15,8 @@ import sys
 def print_line(line):
     print(line.rstrip())
 
+class VEPackagerError(StandardError):
+    pass
 
 class Application(krux.cli.Application):
 
@@ -29,9 +31,14 @@ class Application(krux.cli.Application):
     def _find_vetools(self):
         self.vetools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
 
+    @staticmethod
+    def _get_setup_attribute(attribute_name):
+        pycmd = sh.Command('python')
+        if os.path.isfile("setup.py"):
+            return pycmd('setup.py', "--%s" % attribute_name).strip()
+
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
-        pycmd = sh.Command('python')
 
         group.add_argument(
             '--package-prefix',
@@ -41,19 +48,19 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--repo-url',
-            default=pycmd('setup.py', '--url').strip(),
+            default=self._get_setup_attribute('url'),
             help="Repo URL to pass through to fpm"
         )
 
         group.add_argument(
             '--package-name',
-            default=pycmd('setup.py', '--name').strip(),
+            default=self._get_setup_attribute('name'),
             help="The package name, as seen in apt"
         )
 
         group.add_argument(
             '--package-version',
-            default=pycmd('setup.py', '--version').strip(),
+            default=self._get_setup_attribute('version'),
             help="The package version."
         )
 
@@ -75,7 +82,7 @@ class Application(krux.cli.Application):
         group.add_argument(
             '--build-number',
             default=False,
-            help="A build number, ie from your CI, if you want it in the version number."
+            help="A build number, ie from your CI, if you want it to be appended the version number."
         )
 
         group.add_argument(
@@ -135,6 +142,10 @@ class Application(krux.cli.Application):
     def package(self):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
+        # if present, append the build number to the version number
+        version_string = self.args.package_version
+        if self.args.build_number is not None:
+            version_string = "{0}~{1}".format(self.args.package_version, self.args.build_number)
         # -s dir means "make the package from a directory"
         # -t deb means "make a Debian package"
         # -n sets the name of the package
@@ -144,7 +155,7 @@ class Application(krux.cli.Application):
         # -C changes to the provided directory for the root of the package
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
-            self.args.package_prefix, '-v', self.args.package_version, '--url', self.args.repo_url,
+            self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
             '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
 
     def install_pip(self, pip):
@@ -158,6 +169,11 @@ class Application(krux.cli.Application):
             pip('install', "pip==%s" % self.args.pip_version, _out=print_line)
 
     def run(self):
+        os.chdir(self.args.directory)
+        if not os.path.isfile("setup.py"):
+            raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
+        if self.args.package_version is None or self.args.package_name is None:
+            raise VEPackagerError("no package name or version provided or in setup.py, can't proceed.")
         print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build
         rm = sh.Command('rm')
