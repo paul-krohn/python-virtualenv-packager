@@ -8,6 +8,8 @@ from ConfigParser import RawConfigParser
 import re
 import sys
 
+DEFAULT_PACKAGE_FORMAT='deb'
+
 
 # pass-through function to enable line-wise output from commands called via sh.
 # you would think you could just pass "print" as the callback function, but that
@@ -52,6 +54,12 @@ class Application(krux.cli.Application):
             '--repo-url',
             default=self._get_setup_attribute('url'),
             help="Repo URL to pass through to fpm"
+        )
+
+        group.add_argument(
+            '--package-format',
+            default=DEFAULT_PACKAGE_FORMAT,
+            help="The package format, if not deb"
         )
 
         group.add_argument(
@@ -156,7 +164,7 @@ class Application(krux.cli.Application):
         # --url over-rides fpm's default of "example.com"
         # -C changes to the provided directory for the root of the package
         # . is the directory to start out in, before the -C directory and is where the package file is created
-        fpm('--verbose', '-s', 'dir', '-t', 'deb', '-n', self.args.package_name, '--prefix',
+        fpm('--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
             '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
 
