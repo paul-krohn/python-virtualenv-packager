@@ -10,11 +10,9 @@ Package setup for krux-rundeck-utils
 ######################
 from __future__ import absolute_import
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
-import os
 
 # We use the version to construct the DOWNLOAD_URL.
-VERSION      = '0.0.8'
+VERSION      = '0.0.9'
 NAME         = 've-packager'
 
 # URL to the repository on Github.
