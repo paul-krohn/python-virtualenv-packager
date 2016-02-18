@@ -15,8 +15,10 @@ import sys
 def print_line(line):
     print(line.rstrip())
 
+
 class VEPackagerError(StandardError):
     pass
+
 
 class Application(krux.cli.Application):
 
