@@ -2,4 +2,6 @@
 krux-stdlib==1.3.2
 sh==1.11
 virtualenv-tools==1.0
-pip==1.4.1
+# pip 7.1.2 is recent enough to do All the Things, but does not throw the scary SSL warning that can
+# confuse users. If you are using python >= 2.7.10, feel free to use latest for pip.
+pip==7.1.2
