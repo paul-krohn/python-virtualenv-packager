@@ -45,6 +45,9 @@ class Application(krux.cli.Application):
         double-check that required parts are in place.
         :return: bool
         """
+        # path to python must end match python$ or you will confuse virtualenv-tools
+        if not re.search('python$', self.args.python):
+            raise ConfigurationError('The path to python must match \'python$\', you tried to use: {0}'.format(self.args.python))
         # path to python has to be a link/real file, not a symlink.
         python_real_path = os.path.realpath(self.args.python)
         if python_real_path == self.args.python:
