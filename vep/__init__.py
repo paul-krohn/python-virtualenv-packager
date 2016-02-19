@@ -22,6 +22,10 @@ class VEPackagerError(StandardError):
     pass
 
 
+class ConfigurationError(StandardError):
+    pass
+
+
 class Application(krux.cli.Application):
 
     def __init__(self, name, **kwargs):
@@ -31,9 +35,26 @@ class Application(krux.cli.Application):
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
         self._find_vetools()
+        self._power_on_self_test()
 
     def _find_vetools(self):
         self.vetools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
+
+    def _power_on_self_test(self):
+        """
+        double-check that required parts are in place.
+        :return: bool
+        """
+        # path to python has to be a link/real file, not a symlink.
+        python_real_path = os.path.realpath(self.args.python)
+        if python_real_path == self.args.python:
+            pass
+        else:
+            raise ConfigurationError(
+                "The python specified isn't a proper file. Python we tried to use is: {0}; the real path to that is: {1}".format(
+                    self.args.python, python_real_path
+                )
+            )
 
     @staticmethod
     def _get_setup_attribute(attribute_name):
@@ -72,6 +93,12 @@ class Application(krux.cli.Application):
             '--package-version',
             default=self._get_setup_attribute('version'),
             help="The package version."
+        )
+
+        group.add_argument(
+            '--python',
+            default='/usr/bin/python',
+            help="The path to python to use. Must be a real file, not a symlink."
         )
 
         group.add_argument(
@@ -191,7 +218,7 @@ class Application(krux.cli.Application):
         rm('-f', '-r', self.target)
         print("creating new virtual environment")
         virtualenv = sh.Command('virtualenv')
-        virtualenv('--no-site-packages', self.target, _out=print_line)
+        virtualenv('--no-site-packages', '-p', self.args.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
