@@ -12,7 +12,7 @@ from __future__ import absolute_import
 from setuptools import setup, find_packages
 
 # We use the version to construct the DOWNLOAD_URL.
-VERSION      = '0.0.9'
+VERSION      = '0.0.10'
 NAME         = 've-packager'
 
 # URL to the repository on Github.
