@@ -1,14 +1,16 @@
 --extra-index-url https://staticfiles.krxd.net/foss/pypi/
 # direct dependencies
 sh==1.11
-virtualenv-tools==1.0
+# note that this virtualenv-tools is our fork, not the public one, the source is
+# here: https://github.com/krux/virtualenv-tools
+virtualenv-tools==1.0.1
 # pip 7.1.2 is recent enough to do All the Things, but does not throw the scary SSL warning that can
 # confuse users. If you are using python >= 2.7.10, feel free to use latest for pip.
 pip==7.1.2
 
 # Krux libraries
 kruxstatsd==0.2.4
-krux-stdlib==2.1.1
+krux-stdlib==2.2.1
 
 # Transitive dependencies
 alabaster==0.7.7
