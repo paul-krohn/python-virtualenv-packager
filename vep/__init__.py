@@ -8,7 +8,7 @@ from ConfigParser import RawConfigParser
 import re
 import sys
 
-DEFAULT_PACKAGE_FORMAT='deb'
+DEFAULT_PACKAGE_FORMAT = 'deb'
 
 
 # pass-through function to enable line-wise output from commands called via sh.
@@ -35,6 +35,7 @@ class Application(krux.cli.Application):
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
         self._find_vetools()
+        self.python = self.args.python
         self._power_on_self_test()
 
     def _find_vetools(self):
@@ -45,19 +46,17 @@ class Application(krux.cli.Application):
         double-check that required parts are in place.
         :return: bool
         """
-        # path to python must end match python$ or you will confuse virtualenv-tools
-        if not re.search('python$', self.args.python):
-            raise ConfigurationError('The path to python must match \'python$\', you tried to use: {0}'.format(self.args.python))
-        # path to python has to be a link/real file, not a symlink.
-        python_real_path = os.path.realpath(self.args.python)
-        if python_real_path == self.args.python:
+        # path to python has to be a link/real file, not a symlink; if it is a
+        # symlink, follow it and use that.
+        python_real_path = os.path.realpath(self.python)
+        if python_real_path == self.python:
             pass
         else:
-            raise ConfigurationError(
-                "The python specified isn't a proper file. Python we tried to use is: {0}; the real path to that is: {1}".format(
-                    self.args.python, python_real_path
+            self.logger.info("you asked to use{0}, which is a link to {1}, so we are using that.".format(
+                    self.python, python_real_path
                 )
             )
+            self.python = python_real_path
 
     @staticmethod
     def _get_setup_attribute(attribute_name):
@@ -221,7 +220,7 @@ class Application(krux.cli.Application):
         rm('-f', '-r', self.target)
         print("creating new virtual environment")
         virtualenv = sh.Command('virtualenv')
-        virtualenv('--no-site-packages', '-p', self.args.python, self.target, _out=print_line)
+        virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
