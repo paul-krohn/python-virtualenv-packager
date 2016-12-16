@@ -159,7 +159,7 @@ class Application(krux.cli.Application):
         mkdir = sh.Command('mkdir')
         mkdir('-p', "%s/bin" % self.build_dir)
         rcp = RawConfigParser()
-        # someone could be foolish enough to use a hypen in ther package name, needs to be a _.
+        # someone could be foolish enough to use a hypen in their package name, needs to be a _.
         egg = "%s.egg-info" % re.sub('-', '_', self.args.package_name)
         entry_points = os.path.join(egg, 'entry_points.txt')
         if not os.path.exists(egg) or not os.path.exists(entry_points):
@@ -219,7 +219,9 @@ class Application(krux.cli.Application):
         print("deleting previous virtual environment")
         rm('-f', '-r', self.target)
         print("creating new virtual environment")
-        virtualenv = sh.Command('virtualenv')
+        # we've got to use the virtualenv that is in ve-packager, not the system virtualenv,
+        # which might use a different version of python.
+        virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(sys.executable))
         virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
