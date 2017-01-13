@@ -31,7 +31,9 @@ class Application(krux.cli.Application):
     def __init__(self, name, **kwargs):
         # Call to the superclass to bootstrap.
         super(Application, self).__init__(name=name, **kwargs)
+
         self.build_dir = os.path.join(self.args.directory, ".build")
+        self.dependencies = self.args.dependency
         self.pip_cache = self.args.pip_cache
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
@@ -143,6 +145,14 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--dependency',
+            default=[],
+            action='append',
+            help="a package on which your package should depend. Passed through to fpm as -d. Pass multiple " \
+                 "times for additional dependencies."
+        )
+
+        group.add_argument(
             '--pip-cache',
             default=os.environ.get('PIP_CACHE', None),
             help="directory to use as the pip cache; passed to pip as --cache-dir, which may not be available on " \
@@ -200,10 +210,17 @@ class Application(krux.cli.Application):
         # -v sets the package version
         # --url over-rides fpm's default of "example.com"
         # -C changes to the provided directory for the root of the package
+        # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
-        fpm('--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
+        fpm_args = [
+            '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
-            '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
+            '-C', os.path.join(self.args.directory, self.build_dir),
+        ]
+        for dependency in self.dependencies:
+            fpm_args += ['-d', dependency]
+        fpm_args += ['.']
+        fpm( _out=print_line, *fpm_args )
 
     def install_pip(self, pip):
         """
