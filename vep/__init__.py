@@ -31,7 +31,10 @@ class Application(krux.cli.Application):
     def __init__(self, name, **kwargs):
         # Call to the superclass to bootstrap.
         super(Application, self).__init__(name=name, **kwargs)
+
         self.build_dir = os.path.join(self.args.directory, ".build")
+        self.dependencies = self.args.dependency
+        self.pip_cache = self.args.pip_cache
         self.package_dir = self.args.package_name
         self.target = "%s/%s" % (self.build_dir, self.args.package_name)
         self._find_vetools()
@@ -141,6 +144,21 @@ class Application(krux.cli.Application):
             help="Path to look in for the code you want to virtualenv-packageify. default to current directory."
         )
 
+        group.add_argument(
+            '--dependency',
+            default=[],
+            action='append',
+            help="a package on which your package should depend. Passed through to fpm as -d. Pass multiple " \
+                 "times for additional dependencies."
+        )
+
+        group.add_argument(
+            '--pip-cache',
+            default=os.environ.get('PIP_CACHE', None),
+            help="directory to use as the pip cache; passed to pip as --cache-dir, which may not be available on " \
+                 "older versions of pip."
+        )
+
     def update_paths(self):
         vetools = sh.Command(self.vetools)
         new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
@@ -192,10 +210,17 @@ class Application(krux.cli.Application):
         # -v sets the package version
         # --url over-rides fpm's default of "example.com"
         # -C changes to the provided directory for the root of the package
+        # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
-        fpm('--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
+        fpm_args = [
+            '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
-            '-C', os.path.join(self.args.directory, self.build_dir), '.', _out=print_line)
+            '-C', os.path.join(self.args.directory, self.build_dir),
+        ]
+        for dependency in self.dependencies:
+            fpm_args += ['-d', dependency]
+        fpm_args += ['.']
+        fpm( _out=print_line, *fpm_args )
 
     def install_pip(self, pip):
         """
@@ -206,6 +231,16 @@ class Application(krux.cli.Application):
             pip('install', 'pip', '--upgrade', _out=print_line)
         else:
             pip('install', "pip==%s" % self.args.pip_version, _out=print_line)
+
+    def install_pip_requirements(self, pip):
+        # if there is a requirements.pip, go ahead and install all the things
+        if os.path.isfile(self.args.pip_requirements):
+            print("installing requirements")
+            # installing requirements can take a spell, print output line-wise
+            pip_args = ['install', '-r', self.args.pip_requirements, '-I', ]
+            if self.pip_cache is not None:
+                pip_args += ['--cache-dir', self.pip_cache]
+            pip(_out=print_line, *pip_args)
 
     def run(self):
         os.chdir(self.args.directory)
@@ -230,11 +265,7 @@ class Application(krux.cli.Application):
         target_pip = sh.Command("%s/bin/pip" % self.target)
         print("installing pip==%s" % self.args.pip_version)
         self.install_pip(target_pip)
-        # if there is a requirements.pip, go ahead and install all the things
-        if os.path.isfile(self.args.pip_requirements):
-            print("installing requirements")
-            # installing requirements can take a spell, print output line-wise
-            target_pip('install', '-r', self.args.pip_requirements, '-I', _out=print_line)
+        self.install_pip_requirements(target_pip)
         target_python = sh.Command("%s/bin/python" % self.target)
         print("running setup.py for %s" % self.args.package_name)
         target_python('setup.py', 'install', _out=print_line)
