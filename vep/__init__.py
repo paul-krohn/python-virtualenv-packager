@@ -9,6 +9,9 @@ import re
 import shutil
 import sys
 
+__version__ = '0.0.14'
+
+
 DEFAULT_PACKAGE_FORMAT = 'deb'
 
 
