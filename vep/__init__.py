@@ -9,6 +9,7 @@ import re
 import shutil
 import sys
 
+
 __version__ = '0.0.14'
 
 
@@ -83,6 +84,7 @@ class Application(krux.cli.Application):
                 self.setup_options[option] = self.args.getattr[self.setup_option_names[option]]
             else:
                 self.setup_options[option] = pycmd('setup.py', "--%s" % option).strip()
+        # An inspection in PyCharm will (falsely!) claim that this method doesn't return anything.
         return self.setup_options[option]
 
     def add_cli_arguments(self, parser):
@@ -248,7 +250,7 @@ class Application(krux.cli.Application):
         for dependency in self.dependencies:
             fpm_args += ['-d', dependency]
         fpm_args += ['.']
-        fpm( _out=print_line, *fpm_args )
+        fpm(_out=print_line, *fpm_args)
 
     def install_pip(self, pip):
         """
