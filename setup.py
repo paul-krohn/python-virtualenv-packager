@@ -3,7 +3,7 @@
 # © 2015 Krux Digital, Inc.
 #
 """
-Package setup for krux-rundeck-utils
+Package setup for python-virtualenv-packager, aka ve-packager.
 """
 ######################
 # Standard Libraries #
@@ -11,24 +11,26 @@ Package setup for krux-rundeck-utils
 from __future__ import absolute_import
 from setuptools import setup, find_packages
 
+# version: this requires an environment with dependencies installed.
+from vep import __version__
+
 # We use the version to construct the DOWNLOAD_URL.
-VERSION      = '0.0.13'
 NAME         = 've-packager'
 
 # URL to the repository on Github.
 REPO_URL     = 'https://github.com/krux/python-virtualenv-packager'
 # Github will generate a tarball as long as you tag your releases, so don't
 # forget to tag!
-DOWNLOAD_URL = ''.join((REPO_URL, '/tarball/release/', VERSION))
+DOWNLOAD_URL = ''.join((REPO_URL, '/tarball/release/', __version__))
 
 # Requirements
 # If you have the option, run "pip install -r requirements.pip"
 
 setup(
     name             = NAME,
-    version          = VERSION,
+    version          = __version__,
     author           = 'Paul Krohn',
-    author_email     = 'pkrohn@krux.com',
+    author_email     = 'pkrohn@salesforce.com',
     maintainer       = 'Paul Krohn',
     maintainer_email = 'pkrohn@krux.com',
     description      = 'Create an apt package from a python projet repo.',

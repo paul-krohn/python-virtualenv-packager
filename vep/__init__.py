@@ -6,7 +6,12 @@ import sh
 import os
 from ConfigParser import RawConfigParser
 import re
+import shutil
 import sys
+
+
+__version__ = '0.0.14'
+
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
 
@@ -28,6 +33,12 @@ class ConfigurationError(StandardError):
 
 class Application(krux.cli.Application):
 
+    setup_option_names = {
+        'name': 'package_name',
+        'url': 'repo_url',
+        'version': 'package_version',
+    }
+
     def __init__(self, name, **kwargs):
         # Call to the superclass to bootstrap.
         super(Application, self).__init__(name=name, **kwargs)
@@ -36,10 +47,15 @@ class Application(krux.cli.Application):
         self.dependencies = self.args.dependency
         self.pip_cache = self.args.pip_cache
         self.package_dir = self.args.package_name
-        self.target = "%s/%s" % (self.build_dir, self.args.package_name)
+        self.target = os.path.join(self.build_dir, 'virtualenv')
         self._find_vetools()
         self.python = self.args.python
         self._power_on_self_test()
+        self.setup_options = {
+            'name': None,
+            'url': None,
+            'version': None,
+        }
 
     def _find_vetools(self):
         self.vetools = "%s/virtualenv-tools" % os.path.dirname(sys.executable)
@@ -61,11 +77,15 @@ class Application(krux.cli.Application):
             )
             self.python = python_real_path
 
-    @staticmethod
-    def _get_setup_attribute(attribute_name):
-        pycmd = sh.Command('python')
-        if os.path.isfile("setup.py"):
-            return pycmd('setup.py', "--%s" % attribute_name).strip()
+    def get_setup_option(self, option):
+        pycmd = sh.Command(os.path.join(self.target, 'bin', 'python'))
+        if self.setup_options[option] is None:
+            if getattr(self.args, self.setup_option_names[option]) is not None:
+                self.setup_options[option] = self.args.getattr[self.setup_option_names[option]]
+            else:
+                self.setup_options[option] = pycmd('setup.py', "--%s" % option).strip()
+        # An inspection in PyCharm will (falsely!) claim that this method doesn't return anything.
+        return self.setup_options[option]
 
     def add_cli_arguments(self, parser):
         group = krux.cli.get_group(parser, self.name)
@@ -78,7 +98,7 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--repo-url',
-            default=self._get_setup_attribute('url'),
+            default=None,
             help="Repo URL to pass through to fpm"
         )
 
@@ -90,13 +110,13 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--package-name',
-            default=self._get_setup_attribute('name'),
+            default=None,
             help="The package name, as seen in apt"
         )
 
         group.add_argument(
             '--package-version',
-            default=self._get_setup_attribute('version'),
+            default=None,
             help="The package version."
         )
 
@@ -161,7 +181,15 @@ class Application(krux.cli.Application):
 
     def update_paths(self):
         vetools = sh.Command(self.vetools)
-        new_path = "%s/%s" % (self.args.package_prefix, self.args.package_name)
+        package_name = self.get_setup_option('name')
+        # this path is where the package will be installed on a target host
+        new_path = os.path.join(self.args.package_prefix, package_name)
+
+        # this path is the updated target in the build environment
+        new_target = os.path.join(os.path.dirname(self.target), package_name)
+        # rename target from 'virtualenv' to the package name; update self.target
+        shutil.move(self.target, new_target)
+        self.target = new_target
         print("updating paths in %s to %s" % (self.target, new_path))
         vetools('--update-path', new_path, _cwd=self.target)
 
@@ -178,7 +206,7 @@ class Application(krux.cli.Application):
         mkdir('-p', "%s/bin" % self.build_dir)
         rcp = RawConfigParser()
         # someone could be foolish enough to use a hypen in their package name, needs to be a _.
-        egg = "%s.egg-info" % re.sub('-', '_', self.args.package_name)
+        egg = "%s.egg-info" % re.sub('-', '_', self.get_setup_option('name'))
         entry_points = os.path.join(egg, 'entry_points.txt')
         if not os.path.exists(egg) or not os.path.exists(entry_points):
             print("no entry points, so no symlinks to create")
@@ -188,7 +216,9 @@ class Application(krux.cli.Application):
             return
         os.chdir("%s/bin" % self.build_dir)
         for item in rcp.items('console_scripts'):
-            src = "../%s/bin/%s" % (self.package_dir, item[0])
+            print('linking {0}'.format(item[0]))
+            # src = "../%s/bin/%s" % (self.package_dir, item[0])
+            src = os.path.join(self.get_setup_option('name'), 'bin', item[0])
             dest = item[0]
             print('sym-linking ' + src + ' to ' + dest)
             if os.path.exists(dest):
@@ -200,7 +230,7 @@ class Application(krux.cli.Application):
         os.chdir(self.args.directory)
         fpm = sh.Command("fpm")
         # if present, append the build number to the version number
-        version_string = self.args.package_version
+        version_string = self.get_setup_option('version')
         if self.args.build_number:
             version_string = "{0}~{1}".format(self.args.package_version, self.args.build_number)
         # -s dir means "make the package from a directory"
@@ -213,14 +243,14 @@ class Application(krux.cli.Application):
         # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm_args = [
-            '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.args.package_name, '--prefix',
-            self.args.package_prefix, '-v', version_string, '--url', self.args.repo_url,
+            '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.get_setup_option('name'), '--prefix',
+            self.args.package_prefix, '-v', version_string, '--url', self.get_setup_option('url'),
             '-C', os.path.join(self.args.directory, self.build_dir),
         ]
         for dependency in self.dependencies:
             fpm_args += ['-d', dependency]
         fpm_args += ['.']
-        fpm( _out=print_line, *fpm_args )
+        fpm(_out=print_line, *fpm_args)
 
     def install_pip(self, pip):
         """
@@ -242,14 +272,7 @@ class Application(krux.cli.Application):
                 pip_args += ['--cache-dir', self.pip_cache]
             pip(_out=print_line, *pip_args)
 
-    def run(self):
-        os.chdir(self.args.directory)
-        if not os.path.isfile("setup.py"):
-            raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
-        if self.args.package_version is None or self.args.package_name is None:
-            raise VEPackagerError("no package name or version provided or in setup.py, can't proceed.")
-        print("building %s version %s" % (self.args.package_name, self.args.package_version))
-        # destroy & create a virtualenv for the build
+    def create_virtualenv(self):
         rm = sh.Command('rm')
         print("deleting previous virtual environment")
         rm('-f', '-r', self.target)
@@ -261,14 +284,28 @@ class Application(krux.cli.Application):
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
+        target_pip = sh.Command(os.path.join(self.target, 'bin', 'pip'))
+        target_python = sh.Command(os.path.join(self.target, 'bin', 'python'))
         # now install the pip version from args.pip_version
-        target_pip = sh.Command("%s/bin/pip" % self.target)
         print("installing pip==%s" % self.args.pip_version)
         self.install_pip(target_pip)
+        print("installing requirements")
         self.install_pip_requirements(target_pip)
-        target_python = sh.Command("%s/bin/python" % self.target)
         print("running setup.py for %s" % self.args.package_name)
         target_python('setup.py', 'install', _out=print_line)
+
+    def run(self):
+        os.chdir(self.args.directory)
+        if not os.path.isfile("setup.py"):
+            raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
+        print("building %s version %s" % (self.args.package_name, self.args.package_version))
+        # destroy & create a virtualenv for the build; we can't do much before the virtualenv is
+        # created, as we need to have a python environment that can run setup.py, which sometimes requires
+        # loading __init__.py, which might load other non-stdlib modules.
+        self.create_virtualenv()
+        for name in self.setup_option_names:
+            self.get_setup_option(name)
+        print(self.setup_options)
         self.update_paths()
         self.clean_target()
         if not self.args.skip_scripts:
@@ -278,7 +315,7 @@ class Application(krux.cli.Application):
             env_vars = os.environ.copy()
             # set some environment variables the script might need
             env_vars['PACKAGE_PREFIX'] = self.args.package_prefix
-            env_vars['PACKAGE_NAME'] = self.args.package_name
+            env_vars['PACKAGE_NAME'] = self.get_setup_option('name')
             env_vars['PACKAGE_DIR'] = self.package_dir
             env_vars['TARGET'] = self.target
             env_vars['BUILD_DIR'] = self.build_dir
