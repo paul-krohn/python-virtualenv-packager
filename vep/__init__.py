@@ -10,7 +10,7 @@ import shutil
 import sys
 
 
-__version__ = '0.0.14'
+__version__ = '0.0.15'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -217,8 +217,7 @@ class Application(krux.cli.Application):
         os.chdir("%s/bin" % self.build_dir)
         for item in rcp.items('console_scripts'):
             print('linking {0}'.format(item[0]))
-            # src = "../%s/bin/%s" % (self.package_dir, item[0])
-            src = os.path.join(self.get_setup_option('name'), 'bin', item[0])
+            src = os.path.join('..', self.get_setup_option('name'), 'bin', item[0])
             dest = item[0]
             print('sym-linking ' + src + ' to ' + dest)
             if os.path.exists(dest):
