@@ -81,7 +81,7 @@ class Application(krux.cli.Application):
         pycmd = sh.Command(os.path.join(self.target, 'bin', 'python'))
         if self.setup_options[option] is None:
             if getattr(self.args, self.setup_option_names[option]) is not None:
-                self.setup_options[option] = self.args.getattr[self.setup_option_names[option]]
+                self.setup_options[option] = getattr(self.args, self.setup_option_names[option])
             else:
                 self.setup_options[option] = pycmd('setup.py', "--%s" % option).strip()
         # An inspection in PyCharm will (falsely!) claim that this method doesn't return anything.
