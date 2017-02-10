@@ -28,6 +28,14 @@ class CliOptionTests(unittest.TestCase):
     TEST_NAME = 'test-package-name'
     TEST_URL = 'https://github.com/org/repo'
 
+    def setUp(self):
+        """
+        Deletes and then sets up a virtualenv; even with cached wheels, this will take much longer that usual test setup.
+        In combination with `test_get_setup_option_version`, also tests `create_virtualenv`.
+        """
+        app = vep.Application(name='ve-packager')
+        app.create_virtualenv()
+
     @patch('sys.argv', ['ve-packager', '--package-version', TEST_VERSION,
                         '--package-name', TEST_NAME,
                         '--repo-url', TEST_URL])
