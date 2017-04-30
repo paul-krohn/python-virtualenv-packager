@@ -1,5 +1,43 @@
 --extra-index-url https://staticfiles.krxd.net/foss/pypi/
-krux-stdlib==1.3.0
+# direct dependencies
 sh==1.11
-virtualenv-tools==1.0
-pip==1.4.1
+# note that this virtualenv-tools is our fork, not the public one, the source is
+# here: https://github.com/krux/virtualenv-tools
+virtualenv-tools==1.0.1
+# pip 7.1.2 is recent enough to do All the Things, but does not throw the scary SSL warning that can
+# confuse users. If you are using python >= 2.7.10, feel free to use latest for pip.
+pip==7.1.2
+
+# Krux libraries
+kruxstatsd==0.2.4
+krux-stdlib==2.2.1
+
+# Transitive dependencies
+alabaster==0.7.7
+async==0.6.2
+Babel==2.2.0
+backports-abc==0.4
+backports.ssl-match-hostname==3.5.0.1
+certifi==2015.11.20.1
+docutils==0.12
+fudge==1.1.0
+gitdb==0.6.4
+GitPython==1.0.2
+Jinja2==2.8
+lockfile==0.12.2
+MarkupSafe==0.23
+pygerduty==0.32.1
+Pygments==2.1.1
+pytz==2015.7
+simplejson==3.8.2
+singledispatch==3.4.0.3
+six==1.10.0
+smmap==0.9.0
+snowballstemmer==1.2.1
+Sphinx==1.3.5
+sphinx-rtd-theme==0.1.9
+# it would be pretty to test a current python statsd so this doesn't create a version conflict
+# between 2.0.x and 3.2.x
+statsd==2.0.3
+tornado==4.3
+virtualenv==15.1.0
