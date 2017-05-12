@@ -10,7 +10,7 @@ import shutil
 import sys
 
 
-__version__ = '0.0.16'
+__version__ = '0.0.17'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
