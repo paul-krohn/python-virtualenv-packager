@@ -280,6 +280,9 @@ class Application(krux.cli.Application):
         # we've got to use the virtualenv that is in ve-packager, not the system virtualenv,
         # which might use a different version of python.
         virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(sys.executable))
+        # check if there is a virtualenv alongside whatever python we are using, and use that
+        if os.path.exists('%s/virtualenv' % os.path.dirname(self.python)):
+            virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(self.python))
         virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
