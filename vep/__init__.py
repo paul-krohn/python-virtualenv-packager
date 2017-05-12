@@ -297,7 +297,6 @@ class Application(krux.cli.Application):
         os.chdir(self.args.directory)
         if not os.path.isfile("setup.py"):
             raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
-        print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build; we can't do much before the virtualenv is
         # created, as we need to have a python environment that can run setup.py, which sometimes requires
         # loading __init__.py, which might load other non-stdlib modules.
