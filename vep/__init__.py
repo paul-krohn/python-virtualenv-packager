@@ -242,6 +242,7 @@ class Application(krux.cli.Application):
         # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm_args = [
+            '--deb-no-default-config-files', # suppress a warning about files in /etc, which we won't have
             '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.get_setup_option('name'), '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.get_setup_option('url'),
             '-C', os.path.join(self.args.directory, self.build_dir),
