@@ -10,7 +10,7 @@ import shutil
 import sys
 
 
-__version__ = '0.0.16'
+__version__ = '0.0.17'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -242,6 +242,7 @@ class Application(krux.cli.Application):
         # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm_args = [
+            '--deb-no-default-config-files', # suppress a warning about files in /etc, which we won't have
             '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.get_setup_option('name'), '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.get_setup_option('url'),
             '-C', os.path.join(self.args.directory, self.build_dir),
@@ -279,6 +280,9 @@ class Application(krux.cli.Application):
         # we've got to use the virtualenv that is in ve-packager, not the system virtualenv,
         # which might use a different version of python.
         virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(sys.executable))
+        # check if there is a virtualenv alongside whatever python we are using, and use that
+        if os.path.exists('%s/virtualenv' % os.path.dirname(self.python)):
+            virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(self.python))
         virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
@@ -297,7 +301,6 @@ class Application(krux.cli.Application):
         os.chdir(self.args.directory)
         if not os.path.isfile("setup.py"):
             raise VEPackagerError("no setup.py in %s; can't proceed; try --help" % self.args.directory)
-        print("building %s version %s" % (self.args.package_name, self.args.package_version))
         # destroy & create a virtualenv for the build; we can't do much before the virtualenv is
         # created, as we need to have a python environment that can run setup.py, which sometimes requires
         # loading __init__.py, which might load other non-stdlib modules.
