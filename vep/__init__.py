@@ -178,6 +178,7 @@ class Application(krux.cli.Application):
             '--extra-path',
             default=[],
             action='append',
+            help="Additional paths *in your project* that you want added in to the package."
         )
 
         group.add_argument(
