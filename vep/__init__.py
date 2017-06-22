@@ -259,7 +259,6 @@ class Application(krux.cli.Application):
         for dependency in self.dependencies:
             fpm_args += ['-d', dependency]
         fpm_args += ['.']
-        print("fpm args: %s" % fpm_args)
         fpm(_out=print_line, *fpm_args)
 
     def install_pip(self, pip):
