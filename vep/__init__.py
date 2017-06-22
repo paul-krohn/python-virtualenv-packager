@@ -10,7 +10,7 @@ import shutil
 import sys
 
 
-__version__ = '0.0.17'
+__version__ = '0.0.18'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -50,6 +50,8 @@ class Application(krux.cli.Application):
         self.target = os.path.join(self.build_dir, 'virtualenv')
         self._find_vetools()
         self.python = self.args.python
+        self.extra_paths = self.args.extra_path
+
         self._power_on_self_test()
         self.setup_options = {
             'name': None,
@@ -170,6 +172,13 @@ class Application(krux.cli.Application):
             action='append',
             help="a package on which your package should depend. Passed through to fpm as -d. Pass multiple " \
                  "times for additional dependencies."
+        )
+
+        group.add_argument(
+            '--extra-path',
+            default=[],
+            action='append',
+            help="Additional paths *in your project* that you want added in to the package."
         )
 
         group.add_argument(
@@ -324,6 +333,12 @@ class Application(krux.cli.Application):
             print("running shim script: %s" % self.args.shim_script)
             shim = sh.Command("%s" % self.args.shim_script)
             shim(_env=env_vars, _out=print_line)
+        os.chdir(self.args.directory)
+        if self.extra_paths:
+            for path in self.extra_paths:
+                dst = os.path.join(self.build_dir, self.get_setup_option('name'), os.path.basename(path))
+                print("copying %s to %s" % (path, dst))
+                shutil.copytree(path, dst)
         self.package()
 
 
