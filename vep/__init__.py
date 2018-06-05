@@ -10,7 +10,7 @@ import shutil
 import sys
 
 
-__version__ = '0.0.18'
+__version__ = '0.0.19'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -161,6 +161,12 @@ class Application(krux.cli.Application):
         )
 
         group.add_argument(
+            '--setuptools-version',
+            default='latest',
+            help='Version of setuptools to install in the virtualenv where your application is built.',
+        )
+
+        group.add_argument(
             '--directory',
             default=os.getcwd(),
             help="Path to look in for the code you want to virtualenv-packageify. default to current directory."
@@ -261,15 +267,17 @@ class Application(krux.cli.Application):
         fpm_args += ['.']
         fpm(_out=print_line, *fpm_args)
 
-    def install_pip(self, pip):
+    def install_build_tools(self, pip):
         """
         :param pip: a sh Command pointing to your ve's pip
         :return:
         """
-        if self.args.pip_version == 'latest':
-            pip('install', 'pip', '--upgrade', _out=print_line)
-        else:
-            pip('install', "pip==%s" % self.args.pip_version, _out=print_line)
+        for tool in ['pip', 'setuptools']:
+            version = getattr(self.args, '{}_version'.format(tool))
+            if version == 'latest':
+                pip('install', tool, '--upgrade', _out=print_line)
+            else:
+                pip('install', "%s==%s" % (tool, version), _out=print_line)
 
     def install_pip_requirements(self, pip):
         # if there is a requirements.pip, go ahead and install all the things
@@ -300,7 +308,7 @@ class Application(krux.cli.Application):
         target_python = sh.Command(os.path.join(self.target, 'bin', 'python'))
         # now install the pip version from args.pip_version
         print("installing pip==%s" % self.args.pip_version)
-        self.install_pip(target_pip)
+        self.install_build_tools(target_pip)
         print("installing requirements")
         self.install_pip_requirements(target_pip)
         print("running setup.py for %s" % self.args.package_name)
