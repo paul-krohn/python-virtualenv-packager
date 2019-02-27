@@ -291,10 +291,10 @@ class Application(krux.cli.Application):
         :return: Filename of pip requirements
         :rtype: str
         """
-        filenames = []
         if self.args.pip_requirements:
-            filenames.append(self.args.pip_requirements)
-        filenames.extend(DEFAULT_REQUIREMENTS_FILES)
+            filenames = list(self.args.pip_requirements)
+        else:
+            filenames = list(DEFAULT_REQUIREMENTS_FILES)
 
         path_filename = None
         found = False
