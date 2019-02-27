@@ -306,7 +306,7 @@ class Application(krux.cli.Application):
 
         if not found:
             raise VEPackagerError(
-                'could not find any of these pip requirements files: %s'.format(
+                'could not find any of these pip requirements files: {}'.format(
                     ', '.join(filenames)))
         return path_filename
 
