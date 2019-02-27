@@ -281,7 +281,7 @@ class Application(krux.cli.Application):
             else:
                 pip('install', "%s==%s" % (tool, version), _out=print_line)
 
-    def _pip_requirements_filename(self, path=''):
+    def _pip_requirements_filename(self, path='.'):
         """
         Returns filename of pip requirements file, & verifies that the file exists.
 
@@ -299,7 +299,7 @@ class Application(krux.cli.Application):
         path_filename = None
         found = False
         for filename in filenames:
-            path_filename = filename if not path else os.path.join(path, filename)
+            path_filename = os.path.join(path, filename)
             if os.path.isfile(path_filename):
                 found = True
                 break
