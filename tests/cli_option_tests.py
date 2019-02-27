@@ -8,6 +8,7 @@
 #
 
 from __future__ import absolute_import
+import os
 import unittest
 
 #
@@ -20,6 +21,13 @@ from mock import patch
 # Internal libraries
 #
 import vep
+
+
+def my_isfile(filename):
+    """
+    Test function which calls os.path.isfile
+    """
+    return os.path.isfile(filename)
 
 
 class CliOptionTests(unittest.TestCase):
@@ -48,3 +56,30 @@ class CliOptionTests(unittest.TestCase):
         self.assertEqual(self.TEST_VERSION, app.get_setup_option('version'))
         self.assertEqual(self.TEST_NAME, app.get_setup_option('name'))
         self.assertEqual(self.TEST_URL, app.get_setup_option('url'))
+
+    @patch('os.path.isfile', side_effect=lambda f: f == './requirements.txt')
+    def test_requirements_txt_file(self, _):
+        """
+        Test that, if a requirements.txt file exists, it will be chosen.
+        """
+        app = vep.Application('APP-NAME')
+        self.assertEqual(app.args.pip_requirements, None)
+        self.assertEqual(app._pip_requirements_filename(), './requirements.txt')
+
+    @patch('os.path.isfile', side_effect=lambda f: f == './requirements.pip')
+    def test_requirements_pip_file(self, _):
+        """
+        Test that, if a requirements.pip file exists, it will be chosen.
+        """
+        app = vep.Application('APP-NAME')
+        self.assertEqual(app.args.pip_requirements, None)
+        self.assertEqual(app._pip_requirements_filename(), './requirements.pip')
+
+    @patch('sys.argv', ['ve-packager', '--pip-requirements', 'my-requirements.txt'])
+    @patch('os.path.isfile', side_effect=lambda f: f == 'my-requirements.txt')
+    def test_requirements_my_file(self, _):
+        """
+        Test that supplied requirements file is honored.
+        """
+        app = vep.Application('APP-NAME')
+        self.assertEqual(app.args.pip_requirements, 'my-requirements.txt')
