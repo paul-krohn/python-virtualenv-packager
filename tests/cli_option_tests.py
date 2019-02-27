@@ -48,4 +48,3 @@ class CliOptionTests(unittest.TestCase):
         self.assertEqual(self.TEST_VERSION, app.get_setup_option('version'))
         self.assertEqual(self.TEST_NAME, app.get_setup_option('name'))
         self.assertEqual(self.TEST_URL, app.get_setup_option('url'))
-

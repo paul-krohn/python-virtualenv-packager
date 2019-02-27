@@ -10,10 +10,12 @@ import shutil
 import sys
 
 
-__version__ = '0.0.19'
+__version__ = '0.0.20'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
+# Before 2019, we standardized on requirements.pip; after that we switched to requirements.txt.
+DEFAULT_REQUIREMENTS_FILES = ('requirements.txt', 'requirements.pip')
 
 
 # pass-through function to enable line-wise output from commands called via sh.
@@ -151,7 +153,7 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--pip-requirements',
-            default='requirements.pip',
+            default=None,
         )
 
         group.add_argument(
@@ -176,7 +178,7 @@ class Application(krux.cli.Application):
             '--dependency',
             default=[],
             action='append',
-            help="a package on which your package should depend. Passed through to fpm as -d. Pass multiple " \
+            help="a package on which your package should depend. Passed through to fpm as -d. Pass multiple "
                  "times for additional dependencies."
         )
 
@@ -190,7 +192,7 @@ class Application(krux.cli.Application):
         group.add_argument(
             '--pip-cache',
             default=os.environ.get('PIP_CACHE', None),
-            help="directory to use as the pip cache; passed to pip as --cache-dir, which may not be available on " \
+            help="directory to use as the pip cache; passed to pip as --cache-dir, which may not be available on "
                  "older versions of pip."
         )
 
@@ -257,7 +259,7 @@ class Application(krux.cli.Application):
         # add a -d for each package dependency
         # . is the directory to start out in, before the -C directory and is where the package file is created
         fpm_args = [
-            '--deb-no-default-config-files', # suppress a warning about files in /etc, which we won't have
+            '--deb-no-default-config-files',  # suppress a warning about files in /etc, which we won't have
             '--verbose', '-s', 'dir', '-t', self.args.package_format, '-n', self.get_setup_option('name'), '--prefix',
             self.args.package_prefix, '-v', version_string, '--url', self.get_setup_option('url'),
             '-C', os.path.join(self.args.directory, self.build_dir),
@@ -279,15 +281,45 @@ class Application(krux.cli.Application):
             else:
                 pip('install', "%s==%s" % (tool, version), _out=print_line)
 
+    def _pip_requirements_filename(self, path=''):
+        """
+        Returns filename of pip requirements file, & verifies that the file exists.
+
+        :param path: Path to dir to search. Default it current dir.
+        :type path: str
+        :raises VEPackagerError
+        :return: Filename of pip requirements
+        :rtype: str
+        """
+        filenames = []
+        if self.args.pip_requirements:
+            filenames.append(self.args.pip_requirements)
+        filenames.extend(DEFAULT_REQUIREMENTS_FILES)
+
+        path_filename = None
+        found = False
+        for filename in filenames:
+            path_filename = filename if not path else os.path.join(path, filename)
+            if os.path.isfile(path_filename):
+                found = True
+                break
+
+        if not found:
+            raise VEPackagerError(
+                'could not find any of these pip requirements files: %s'.format(
+                    ', '.join(filenames)))
+        return path_filename
+
     def install_pip_requirements(self, pip):
         # if there is a requirements.pip, go ahead and install all the things
-        if os.path.isfile(self.args.pip_requirements):
-            print("installing requirements")
-            # installing requirements can take a spell, print output line-wise
-            pip_args = ['install', '-r', self.args.pip_requirements, '-I', ]
-            if self.pip_cache is not None:
-                pip_args += ['--cache-dir', self.pip_cache]
-            pip(_out=print_line, *pip_args)
+        pip_requirements_filename = self._pip_requirements_filename()
+
+        print("installing requirements")
+        # installing requirements can take a spell, print output line-wise
+        pip_args = ['install', '-r', pip_requirements_filename, '-I', ]
+        if self.pip_cache is not None:
+            pip_args += ['--cache-dir', self.pip_cache]
+        pip(_out=print_line, *pip_args)
 
     def create_virtualenv(self):
         rm = sh.Command('rm')
@@ -353,6 +385,7 @@ class Application(krux.cli.Application):
 def main():
     app = Application(name='ve-packager')
     app.run()
+
 
 if __name__ == '__main__':
     main()
