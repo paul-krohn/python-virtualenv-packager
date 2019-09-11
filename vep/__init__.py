@@ -1,16 +1,20 @@
-# call print() as a function, not statement
-from __future__ import print_function
-
 import krux.cli
-import sh
 import os
-from ConfigParser import RawConfigParser
 import re
+import sh
 import shutil
+import six
 import sys
 
+if six.PY2:
+    from ConfigParser import RawConfigParser
+    PYVER = '/usr/bin/python'
+else:
+    from configparser import RawConfigParser
+    PYVER = '/usr/bin/python3'
 
-__version__ = '0.0.21'
+
+__version__ = '0.1.0'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -25,11 +29,11 @@ def print_line(line):
     print(line.rstrip())
 
 
-class VEPackagerError(StandardError):
+class VEPackagerError(Exception):
     pass
 
 
-class ConfigurationError(StandardError):
+class ConfigurationError(Exception):
     pass
 
 
@@ -126,7 +130,7 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--python',
-            default='/usr/bin/python',
+            default=PYVER,
             help="The path to python to use. Must be a real file, not a symlink."
         )
 
@@ -321,17 +325,35 @@ class Application(krux.cli.Application):
             pip_args += ['--cache-dir', self.pip_cache]
         pip(_out=print_line, *pip_args)
 
+    def which(self, program):
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+        fpath, fname = os.path.split(program)
+        if fpath:
+            if is_exe(program):
+                return program
+        else:
+            for path in os.environ["PATH"].split(os.pathsep):
+                exe_file = os.path.join(path, program)
+                if is_exe(exe_file):
+                    return exe_file
+
+        return None
+
     def create_virtualenv(self):
         rm = sh.Command('rm')
         print("deleting previous virtual environment")
         rm('-f', '-r', self.target)
         print("creating new virtual environment")
-        # we've got to use the virtualenv that is in ve-packager, not the system virtualenv,
-        # which might use a different version of python.
-        virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(sys.executable))
+        # Find virtualenv that is in the system path, if there are multiple use the 1st one found
+        # Python2 uses virtualenv provided by deb packages - /usr/bin/virtualenv
+        # Python3 will use virtualenv provided by Pip - /usr/local/bin/virtualenv
+        virtualenv = sh.Command(self.which('virtualenv'))
         # check if there is a virtualenv alongside whatever python we are using, and use that
         if os.path.exists('%s/virtualenv' % os.path.dirname(self.python)):
             virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(self.python))
+
         virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
