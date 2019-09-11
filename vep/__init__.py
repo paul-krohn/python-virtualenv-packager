@@ -350,6 +350,10 @@ class Application(krux.cli.Application):
         # Python2 uses virtualenv provided by deb packages - /usr/bin/virtualenv
         # Python3 will use virtualenv provided by Pip - /usr/local/bin/virtualenv
         virtualenv = sh.Command(self.which('virtualenv'))
+        # check if there is a virtualenv alongside whatever python we are using, and use that
+        if os.path.exists('%s/virtualenv' % os.path.dirname(self.python)):
+            virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(self.python))
+        
         virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
