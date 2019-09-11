@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# © 2015 Krux Digital, Inc.
+# © 2019 Salesforce.com, Inc.
 #
 """
 Package setup for python-virtualenv-packager, aka ve-packager.

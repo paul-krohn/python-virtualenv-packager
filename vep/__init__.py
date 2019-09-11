@@ -1,13 +1,17 @@
-# call print() as a function, not statement
-from __future__ import print_function
-
 import krux.cli
-import sh
 import os
-from ConfigParser import RawConfigParser
 import re
+import sh
 import shutil
+import six
 import sys
+
+if six.PY2:
+    from ConfigParser import RawConfigParser
+    PYVER = '/usr/bin/python'
+else:
+    from configparser import RawConfigParser
+    PYVER = '/usr/bin/python3'
 
 
 __version__ = '0.0.21'
@@ -25,11 +29,11 @@ def print_line(line):
     print(line.rstrip())
 
 
-class VEPackagerError(StandardError):
+class VEPackagerError(Exception):
     pass
 
 
-class ConfigurationError(StandardError):
+class ConfigurationError(Exception):
     pass
 
 
@@ -126,7 +130,7 @@ class Application(krux.cli.Application):
 
         group.add_argument(
             '--python',
-            default='/usr/bin/python',
+            default=PYVER,
             help="The path to python to use. Must be a real file, not a symlink."
         )
 
