@@ -37,3 +37,4 @@ sphinx-rtd-theme==0.4.3
 # between 2.0.x and 3.2.x
 statsd==3.3.0
 tornado==5.1.1
+virtualenv==16.7.5
