@@ -3,7 +3,7 @@
 sh==1.12.14
 # note that this virtualenv-tools is our fork, not the public one, the source is
 # here: https://github.com/krux/virtualenv-tools
-virtualenv-tools==1.0.1
+virtualenv-tools3==2.0.2
 
 # Krux libraries
 kruxstatsd==0.3.6
