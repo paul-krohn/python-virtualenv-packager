@@ -44,7 +44,7 @@ setup(
     install_requires = [
         "krux-stdlib",
         "sh",
-        "virtualenv-tools"
+        "virtualenv-tools3"
     ],
     entry_points     = {
         'console_scripts': [
