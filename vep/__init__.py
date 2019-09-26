@@ -14,7 +14,7 @@ else:
     PYVER = '/usr/bin/python3'
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
