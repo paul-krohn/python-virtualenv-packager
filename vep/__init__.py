@@ -14,7 +14,7 @@ else:
     PYVER = '/usr/bin/python3'
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 DEFAULT_PACKAGE_FORMAT = 'deb'
@@ -354,7 +354,7 @@ class Application(krux.cli.Application):
         if os.path.exists('%s/virtualenv' % os.path.dirname(self.python)):
             virtualenv = sh.Command('%s/virtualenv' % os.path.dirname(self.python))
 
-        virtualenv('--no-site-packages', '-p', self.python, self.target, _out=print_line)
+        virtualenv('-p', self.python, self.target, _out=print_line)
         # the sh module does not provide a way to create a shell with a virtualenv
         # activated, the next best thing is to set up a shortcut for pip and python
         # in the target virtualenv
