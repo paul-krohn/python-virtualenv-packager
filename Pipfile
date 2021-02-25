@@ -1,0 +1,25 @@
+[[source]]
+url = "${KRUX_PIP_PROP_URL}"
+verify_ssl = true
+name = "kruxprop"
+
+[[source]]
+url = "${KRUX_PIP_FOSS_URL}"
+verify_ssl = true
+name = "kruxfoss"
+
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+coverage = "*"
+mock = "==3.0.5"
+nose = "==1.3.7"
+
+[packages]
+krux-stdlib = {version="==4.0.0", index="kruxfoss"}
+virtualenv-tools3 = {version="==2.0.2", index="kruxfoss"}
+sh = {version="==1.12.14"}
+six = {version="*"}
