@@ -13,10 +13,6 @@ else:
     from configparser import RawConfigParser
     PYVER = '/usr/bin/python3'
 
-
-__version__ = '0.1.3'
-
-
 DEFAULT_PACKAGE_FORMAT = 'deb'
 # Before 2019, we standardized on requirements.pip; after that we switched to requirements.txt.
 DEFAULT_REQUIREMENTS_FILES = ('requirements.txt', 'requirements.pip')

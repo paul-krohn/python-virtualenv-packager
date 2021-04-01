@@ -11,8 +11,7 @@ Package setup for python-virtualenv-packager, aka ve-packager.
 from __future__ import absolute_import
 from setuptools import setup, find_packages
 
-# version: this requires an environment with dependencies installed.
-from vep import __version__
+__version__ = '0.1.4'
 
 # We use the version to construct the DOWNLOAD_URL.
 NAME         = 've-packager'
@@ -24,7 +23,7 @@ REPO_URL     = 'https://github.com/krux/python-virtualenv-packager'
 DOWNLOAD_URL = ''.join((REPO_URL, '/tarball/release/', __version__))
 
 # Requirements
-# If you have the option, run "pip install -r requirements.pip"
+# If you have the option, run "pipenv install"
 
 setup(
     name             = NAME,
